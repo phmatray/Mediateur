@@ -1,5 +1,30 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E8B5A8F5-6E5C-4F4A-9F5C-5E5C5E5C5E5C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F8B5A8F5-6E5C-4F4A-9F5C-5E5C5E5C5E5D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{G8B5A8F5-6E5C-4F4A-9F5C-5E5C5E5C5E5E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{H8B5A8F5-6E5C-4F4A-9F5C-5E5C5E5C5E5F}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		TDD-SUMMARY.md = TDD-SUMMARY.md
+		REFACTORING-SUMMARY.md = REFACTORING-SUMMARY.md
+		SOLUTION-ORGANIZATION.md = SOLUTION-ORGANIZATION.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{I8B5A8F5-6E5C-4F4A-9F5C-5E5C5E5C5E60}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		.editorconfig = .editorconfig
+		Directory.Build.props = Directory.Build.props
+		LICENSE = LICENSE
+	EndProjectSection
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mediateur", "Mediateur\Mediateur\Mediateur.csproj", "{8B94B18E-72F4-46DD-AC2C-497D8E863334}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mediateur.Sample", "Mediateur\Mediateur.Sample\Mediateur.Sample.csproj", "{1C2E5FB3-DB6D-4C0B-B325-8AF7630D1B6E}"
@@ -24,5 +49,10 @@ Global
 		{51D04D06-8681-4E61-BDEB-BDBF00260BB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51D04D06-8681-4E61-BDEB-BDBF00260BB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51D04D06-8681-4E61-BDEB-BDBF00260BB4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8B94B18E-72F4-46DD-AC2C-497D8E863334} = {E8B5A8F5-6E5C-4F4A-9F5C-5E5C5E5C5E5C}
+		{1C2E5FB3-DB6D-4C0B-B325-8AF7630D1B6E} = {G8B5A8F5-6E5C-4F4A-9F5C-5E5C5E5C5E5E}
+		{51D04D06-8681-4E61-BDEB-BDBF00260BB4} = {F8B5A8F5-6E5C-4F4A-9F5C-5E5C5E5C5E5D}
 	EndGlobalSection
 EndGlobal
