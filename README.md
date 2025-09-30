@@ -15,6 +15,10 @@ A **zero-reflection**, **compile-time** mediator pattern implementation for .NET
 - ✅ **Compile-Time Diagnostics** - Roslyn analyzer catches common issues during build
 - ✅ **ValueTask Throughout** - Zero-allocation async paths where possible
 - ✅ **Pub/Sub Support** - Multiple handlers per notification
+- ✅ **Async Streaming** - IAsyncEnumerable support for streaming data
+- ✅ **Result Pattern** - Error handling without exceptions
+- ✅ **Modern Extensions** - Fluent API with retry, timeout, and safe execution
+- ✅ **Validation Attributes** - Built-in validation support
 - ✅ **No Service Locator** - Pure dependency injection
 - ✅ **Minimal API** - Simple, intuitive MediatR-like interface
 
@@ -79,8 +83,14 @@ var mediator = serviceProvider.GetRequiredService<IMediator>();
 // Send a query
 var query = new GetUserQuery(userId);
 var user = await mediator.Send(query);
-
 Console.WriteLine($"User: {user.Name}");
+
+// Or use the Result pattern for safe execution
+var result = await mediator.SendSafe(query);
+result.Match(
+    onSuccess: user => Console.WriteLine($"User: {user.Name}"),
+    onFailure: error => Console.WriteLine($"Error: {error}")
+);
 ```
 
 ## 📚 Core Concepts
@@ -245,9 +255,126 @@ Mediateur outperforms reflection-based mediators significantly:
 
 *Benchmarks run on .NET 9 with simple request/handler pairs*
 
-## 🎨 Advanced Features (Planned)
+## 🎨 Advanced Features
+
+### Async Streaming
+
+Stream large datasets efficiently using `IAsyncEnumerable`:
+
+```csharp
+public sealed record StreamUsersQuery(int PageSize = 10) : IStreamRequest<UserDto>;
+
+public sealed class StreamUsersQueryHandler : IStreamRequestHandler<StreamUsersQuery, UserDto>
+{
+    public async IAsyncEnumerable<UserDto> Handle(
+        StreamUsersQuery request,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        for (int i = 1; i <= request.PageSize; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.Delay(100, cancellationToken);
+
+            yield return new UserDto(
+                Guid.NewGuid(),
+                $"User {i}",
+                $"user{i}@example.com");
+        }
+    }
+}
+
+// Usage - consume the stream
+await foreach (var user in mediator.Stream(new StreamUsersQuery(100)))
+{
+    Console.WriteLine($"User: {user.Name}");
+}
+
+// Or collect to a list
+var users = await mediator.Stream(new StreamUsersQuery()).ToListAsync();
+```
+
+### Result Pattern
+
+Handle errors gracefully without exceptions:
+
+```csharp
+// SendSafe returns Result<T> instead of throwing
+var result = await mediator.SendSafe(new GetUserQuery(userId));
+
+if (result.IsSuccess)
+{
+    Console.WriteLine($"User: {result.Value.Name}");
+}
+else
+{
+    Console.WriteLine($"Error: {result.Error}");
+}
+
+// Or use pattern matching
+var message = result.Match(
+    onSuccess: user => $"Found user: {user.Name}",
+    onFailure: error => $"Error: {error}"
+);
+
+// Deconstruct the result
+var (isSuccess, user, error) = result;
+```
+
+### Modern Extension Methods
+
+Simplify common patterns with extension methods:
+
+```csharp
+// Retry failed requests automatically
+var user = await mediator.SendWithRetry(
+    new GetUserQuery(userId),
+    maxRetries: 3,
+    delayMs: 100
+);
+
+// Add timeout to requests
+var user = await mediator.SendWithTimeout(
+    new GetUserQuery(userId),
+    timeoutMs: 5000
+);
+
+// Send multiple requests in parallel
+var queries = new[] {
+    new GetUserQuery(userId1),
+    new GetUserQuery(userId2),
+    new GetUserQuery(userId3)
+};
+var users = await mediator.SendMany(queries);
+
+// Publish notifications with error suppression
+await mediator.PublishSafe(
+    new OrderCreatedNotification(orderId),
+    onError: ex => _logger.LogError(ex, "Notification failed")
+);
+```
+
+### Validation Attributes
+
+Add declarative validation to your requests:
+
+```csharp
+[Validation(StopOnFailure = true, ErrorMessageFormat = "Validation failed: {0}")]
+public sealed record CreateUserCommand(
+    [RequiredValidation(ErrorMessage = "Name is required")]
+    [StringLength(3, 50, ErrorMessage = "Name must be 3-50 characters")]
+    string Name,
+
+    [RequiredValidation]
+    string Email,
+
+    [Range(18, 120, ErrorMessage = "Age must be 18-120")]
+    int Age
+) : IRequest<UserDto>;
+```
 
 ### Pipeline Behaviors
+
+Add cross-cutting concerns to handlers:
 
 ```csharp
 [Log] // Adds logging around handler execution
@@ -255,24 +382,7 @@ public sealed class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto>
 
 [Validate(Order = 1)] // Validates request before execution
 [Log(Order = 2)]      // Logs after validation
-public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand> { ... }
-```
-
-### Streaming
-
-```csharp
-public sealed record StreamUsersQuery : IStreamRequest<UserDto>;
-
-public sealed class StreamUsersHandler : IStreamRequestHandler<StreamUsersQuery, UserDto>
-{
-    public async IAsyncEnumerable<UserDto> Handle(StreamUsersQuery request, ...)
-    {
-        await foreach (var user in _repository.StreamAllAsync())
-        {
-            yield return user;
-        }
-    }
-}
+public sealed class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto> { ... }
 ```
 
 ## 📊 Comparison with MediatR
@@ -283,9 +393,12 @@ public sealed class StreamUsersHandler : IStreamRequestHandler<StreamUsersQuery,
 | AOT Compatible | ✅ Yes | ❌ No |
 | Performance | ⚡ Fast | 🐌 Slower |
 | Setup | Simple | Simple |
-| Pipeline Behaviors | 🚧 Planned | ✅ Yes |
+| Async Streams | ✅ Yes | ✅ Yes |
+| Result Pattern | ✅ Yes | ❌ No |
+| Modern Extensions | ✅ Yes | ⚠️ Limited |
+| Validation Attributes | ✅ Yes | ⚠️ External |
+| Pipeline Behaviors | ✅ Yes | ✅ Yes |
 | Request Pre/Post Processors | 🚧 Planned | ✅ Yes |
-| Streams | 🚧 Planned | ✅ Yes |
 | Polymorphic Dispatch | ❌ No | ✅ Yes |
 | Migration from MediatR | Easy | N/A |
 
@@ -305,6 +418,11 @@ Check out the [Mediateur.Sample](./Mediateur/Mediateur.Sample/) project for comp
 - Queries with responses
 - Commands without responses
 - Notifications with multiple handlers
+- Async streaming with `IStreamRequest`
+- Result pattern with `SendSafe`
+- Extension methods (retry, timeout, parallel execution)
+- Validation attributes
+- Pipeline behaviors
 - Dependency injection setup
 
 ## 🤝 Contributing
