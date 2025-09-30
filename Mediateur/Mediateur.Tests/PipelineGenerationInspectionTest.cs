@@ -58,8 +58,8 @@ namespace TestNamespace
         }
 
         // Verify pipeline file exists
-        var pipelineFile = generatedFiles.FirstOrDefault(f => f.HintName.StartsWith("Pipeline."));
-        Assert.NotNull(pipelineFile);
+        var hasPipelineFile = generatedFiles.Any(f => f.HintName.StartsWith("Pipeline."));
+        Assert.True(hasPipelineFile, "Expected to find a pipeline file");
     }
 
     private static (ImmutableArray<Diagnostic> Diagnostics, ImmutableArray<GeneratedSourceResult> GeneratedFiles)
