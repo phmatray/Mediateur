@@ -12,6 +12,7 @@ A **zero-reflection**, **compile-time** mediator pattern implementation for .NET
 - ✅ **AOT Compatible** - Full NativeAOT support for minimal deployments
 - ✅ **High Performance** - 2-5x faster than reflection-based mediators
 - ✅ **Type-Safe** - Compiler-verified request→handler mappings
+- ✅ **Compile-Time Diagnostics** - Roslyn analyzer catches common issues during build
 - ✅ **ValueTask Throughout** - Zero-allocation async paths where possible
 - ✅ **Pub/Sub Support** - Multiple handlers per notification
 - ✅ **No Service Locator** - Pure dependency injection
@@ -193,6 +194,41 @@ internal sealed partial class Mediator : IMediator
     {
         var handler = (GetUserQueryHandler)_serviceProvider.GetService(typeof(GetUserQueryHandler))!;
         return handler.Handle(request, cancellationToken);
+    }
+}
+```
+
+## 🔍 Compile-Time Diagnostics
+
+Mediateur includes a Roslyn analyzer that detects common issues at compile-time:
+
+### MEDGEN001: Multiple Handlers for Same Request
+
+```csharp
+public sealed record GetUserQuery(Guid Id) : IRequest<UserDto>;
+
+// ❌ Warning: Multiple handlers for GetUserQuery
+public sealed class FirstHandler : IRequestHandler<GetUserQuery, UserDto> { ... }
+public sealed class SecondHandler : IRequestHandler<GetUserQuery, UserDto> { ... }
+```
+
+**Fix**: Each request type should have exactly one handler.
+
+### MEDGEN002: Request Without Handler
+
+```csharp
+// ❌ Warning: No handler found for OrphanQuery
+public sealed record OrphanQuery(string Data) : IRequest<string>;
+```
+
+**Fix**: Implement a handler for the request:
+
+```csharp
+public sealed class OrphanQueryHandler : IRequestHandler<OrphanQuery, string>
+{
+    public ValueTask<string> Handle(OrphanQuery request, CancellationToken cancellationToken)
+    {
+        return ValueTask.FromResult("Result");
     }
 }
 ```

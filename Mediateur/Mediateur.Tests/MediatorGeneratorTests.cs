@@ -241,6 +241,140 @@ namespace TestNamespace
         Assert.Empty(generatedFiles);
     }
 
+    [Fact]
+    public void GeneratesPipelineWrapper_WithLogAttribute()
+    {
+        // Arrange
+        var source = @"
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Mediateur;
+
+namespace TestNamespace
+{
+    public sealed record TestQuery(string Name) : IRequest<string>;
+
+    [Log]
+    public sealed class TestQueryHandler : IRequestHandler<TestQuery, string>
+    {
+        public ValueTask<string> Handle(TestQuery request, CancellationToken cancellationToken)
+        {
+            return ValueTask.FromResult($""Hello, {request.Name}!"");
+        }
+    }
+}";
+
+        // Act
+        var (diagnostics, generatedFiles) = RunGenerator(source);
+
+        // Assert
+        Assert.Empty(diagnostics);
+
+        // Should generate a pipeline wrapper file
+        Assert.Contains(generatedFiles, f => f.HintName == "Pipeline.TestQuery.g.cs");
+
+        var pipelineFile = generatedFiles.First(f => f.HintName == "Pipeline.TestQuery.g.cs");
+        var pipelineCode = pipelineFile.SourceText.ToString();
+
+        // Should contain wrapper class
+        Assert.Contains("__Log_TestQuery", pipelineCode);
+        Assert.Contains("Stopwatch", pipelineCode);
+        Assert.Contains("Console.WriteLine", pipelineCode);
+    }
+
+    [Fact]
+    public void GeneratesPipelineWrapper_WithValidateAttribute()
+    {
+        // Arrange
+        var source = @"
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Mediateur;
+
+namespace TestNamespace
+{
+    public sealed record CreateUserCommand(string Name, string Email) : IRequest;
+
+    [Validate]
+    public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand>
+    {
+        public ValueTask<Unit> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+        {
+            return ValueTask.FromResult(Unit.Value);
+        }
+    }
+}";
+
+        // Act
+        var (diagnostics, generatedFiles) = RunGenerator(source);
+
+        // Assert
+        Assert.Empty(diagnostics);
+
+        // Should generate a pipeline wrapper file
+        Assert.Contains(generatedFiles, f => f.HintName == "Pipeline.CreateUserCommand.g.cs");
+
+        var pipelineFile = generatedFiles.First(f => f.HintName == "Pipeline.CreateUserCommand.g.cs");
+        var pipelineCode = pipelineFile.SourceText.ToString();
+
+        // Should contain wrapper class
+        Assert.Contains("__Validate_CreateUserCommand", pipelineCode);
+    }
+
+    [Fact]
+    public void GeneratesNestedPipelineWrappers_WithMultipleAttributes()
+    {
+        // Arrange
+        var source = @"
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Mediateur;
+
+namespace TestNamespace
+{
+    public sealed record UpdateUserCommand(int Id, string Name) : IRequest;
+
+    [Validate(Order = 1)]
+    [Log(Order = 2)]
+    public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand>
+    {
+        public ValueTask<Unit> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
+        {
+            return ValueTask.FromResult(Unit.Value);
+        }
+    }
+}";
+
+        // Act
+        var (diagnostics, generatedFiles) = RunGenerator(source);
+
+        // Assert
+        Assert.Empty(diagnostics);
+
+        var pipelineFile = generatedFiles.First(f => f.HintName == "Pipeline.UpdateUserCommand.g.cs");
+        var pipelineCode = pipelineFile.SourceText.ToString();
+
+        // Should contain both wrapper classes
+        Assert.Contains("__Validate_UpdateUserCommand", pipelineCode);
+        Assert.Contains("__Log_UpdateUserCommand", pipelineCode);
+
+        // Check order in mediator
+        var mediatorFile = generatedFiles.First(f => f.HintName == "Mediator.g.cs");
+        var mediatorCode = mediatorFile.SourceText.ToString();
+
+        // Validate should wrap Log which wraps the actual handler (order matters)
+        var validateIndex = mediatorCode.IndexOf("__Validate_UpdateUserCommand");
+        var logIndex = mediatorCode.IndexOf("__Log_UpdateUserCommand");
+
+        Assert.True(validateIndex > 0);
+        Assert.True(logIndex > 0);
+        // Validate should appear first (outer wrapper)
+        Assert.True(validateIndex < logIndex);
+    }
+
     private static (ImmutableArray<Diagnostic> Diagnostics, ImmutableArray<GeneratedSourceResult> GeneratedFiles)
         RunGenerator(string source)
     {
