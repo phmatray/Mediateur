@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Mediateur.Tests;
@@ -383,7 +384,8 @@ namespace TestNamespace
         var references = AppDomain.CurrentDomain.GetAssemblies()
             .Where(assembly => !assembly.IsDynamic && !string.IsNullOrWhiteSpace(assembly.Location))
             .Select(assembly => MetadataReference.CreateFromFile(assembly.Location))
-            .Cast<MetadataReference>();
+            .Cast<MetadataReference>()
+            .Append(MetadataReference.CreateFromFile(typeof(IServiceCollection).Assembly.Location));
 
         var compilation = CSharpCompilation.Create(
             "TestAssembly",
