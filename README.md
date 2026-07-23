@@ -1,3 +1,5 @@
+![Mediateur banner](.github/banner.png)
+
 # Mediateur
 
 A **zero-reflection**, **compile-time** mediator pattern implementation for .NET using source generators. A high-performance, AOT-friendly alternative to MediatR.
