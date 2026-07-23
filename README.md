@@ -2,6 +2,30 @@
 
 # Mediateur
 
+<!-- portfolio-toc:start -->
+
+## Table of Contents
+
+- [✨ Features](#-features)
+- [📦 Installation](#-installation)
+- [🚀 Quick Start](#-quick-start)
+- [📚 Core Concepts](#-core-concepts)
+- [🎯 How It Works](#-how-it-works)
+- [🔍 Compile-Time Diagnostics](#-compile-time-diagnostics)
+- [🔥 Performance](#-performance)
+- [🎨 Advanced Features](#-advanced-features)
+- [📊 Comparison with MediatR](#-comparison-with-mediatr)
+- [🛠️ Building from Source](#-building-from-source)
+- [📖 Examples](#-examples)
+- [Tech Stack](#tech-stack)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [🙏 Acknowledgments](#-acknowledgments)
+- [📧 Contact](#-contact)
+
+<!-- portfolio-toc:end -->
+
+
 A **zero-reflection**, **compile-time** mediator pattern implementation for .NET using source generators. A high-performance, AOT-friendly alternative to MediatR.
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
