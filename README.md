@@ -427,6 +427,21 @@ Check out the [Mediateur.Sample](./Mediateur/Mediateur.Sample/) project for comp
 - Pipeline behaviors
 - Dependency injection setup
 
+<!-- portfolio-techstack:start -->
+
+## Tech Stack
+
+- **.NET 10 · .NET Standard 2.0**
+- Microsoft.Bcl.AsyncInterfaces
+- Microsoft.Extensions.DependencyInjection
+- Microsoft.CodeAnalysis.CSharp.SourceGenerators.Testing.XUnit
+- xunit
+- xunit.runner.visualstudio
+- Microsoft.CodeAnalysis.CSharp
+- Microsoft.CodeAnalysis.CSharp.Workspaces
+
+<!-- portfolio-techstack:end -->
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
